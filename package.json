@@ -8,6 +8,7 @@
     "dev": "wrangler dev"
   },
   "devDependencies": {
+    "@cloudflare/containers": "^0.1.0",
     "@cloudflare/workers-types": "^4.20250109.0",
     "esbuild": "^0.24.2",
     "typescript": "^5.7.3",
