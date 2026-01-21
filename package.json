@@ -1,0 +1,16 @@
+{
+  "name": "rsshub-container-deploy",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --platform=neutral --external:@cloudflare/containers --external:@cloudflare/workers-types",
+    "deploy": "pnpm run build && wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.3",
+    "wrangler": "^4.5.0"
+  }
+}
