@@ -113,6 +113,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --containers-rollout=immediate
 
       - name: Restore placeholder in wrangler.toml before commit
         if: steps.check-update.outputs.needed == 'true'

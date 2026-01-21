@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "build": "esbuild src/index.ts --bundle --outfile=dist/index.mjs --format=esm --platform=neutral --external:@cloudflare/containers --external:@cloudflare/workers-types",
-    "deploy": "pnpm run build && wrangler deploy",
+    "deploy": "pnpm run build && wrangler deploy --containers-rollout=immediate",
     "dev": "wrangler dev"
   },
   "devDependencies": {
