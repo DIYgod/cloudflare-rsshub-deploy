@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '*/5 * * * *'
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deploy even if tag is unchanged'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   check-and-deploy:
@@ -61,7 +67,11 @@ jobs:
       - name: Check if update needed
         id: check-update
         run: |
-          if [ "${{ steps.get-latest.outputs.tag }}" != "${{ steps.get-current.outputs.tag }}" ]; then
+          FORCE_DEPLOY="${{ inputs.force_deploy }}"
+          if [ "$FORCE_DEPLOY" = "true" ]; then
+            echo "Force deploy requested"
+            echo "needed=true" >> $GITHUB_OUTPUT
+          elif [ "${{ steps.get-latest.outputs.tag }}" != "${{ steps.get-current.outputs.tag }}" ]; then
             echo "Update needed: ${{ steps.get-current.outputs.tag }} -> ${{ steps.get-latest.outputs.tag }}"
             echo "needed=true" >> $GITHUB_OUTPUT
           else
@@ -110,5 +120,9 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add wrangler.toml
-          git commit -m "chore: update rsshub image to ${{ steps.get-latest.outputs.tag }}"
-          git push
+          if git diff --staged --quiet; then
+            echo "No changes to commit (force deploy with same tag)"
+          else
+            git commit -m "chore: update rsshub image to ${{ steps.get-latest.outputs.tag }}"
+            git push
+          fi
