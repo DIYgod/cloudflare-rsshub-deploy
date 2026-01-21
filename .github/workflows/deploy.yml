@@ -1,0 +1,114 @@
+name: Deploy RSSHub to Cloudflare Container
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Get latest RSSHub image tag
+        id: get-latest
+        run: |
+          # Get token for ghcr.io anonymous access
+          TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:diygod/rsshub:pull" | jq -r '.token')
+
+          # Get tags list from ghcr.io
+          TAGS=$(curl -s "https://ghcr.io/v2/diygod/rsshub/tags/list" -H "Authorization: Bearer $TOKEN" | jq -r '.tags[]')
+
+          # Filter for commit hash tags (40 hex chars, no prefix) and get the last one
+          # Tags appear to be returned in chronological order, so we reverse and get first match
+          LATEST_TAG=$(echo "$TAGS" | grep -E '^[a-f0-9]{40}$' | tail -1)
+
+          if [ -z "$LATEST_TAG" ]; then
+            echo "Failed to get latest tag"
+            exit 1
+          fi
+
+          echo "Latest tag: $LATEST_TAG"
+          echo "tag=$LATEST_TAG" >> $GITHUB_OUTPUT
+
+      - name: Get current tag from wrangler.toml
+        id: get-current
+        run: |
+          CURRENT_TAG=$(grep -oP 'image = "rsshub:\K[^"]+' wrangler.toml || echo "")
+          echo "Current tag: $CURRENT_TAG"
+          echo "tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
+
+      - name: Check if update needed
+        id: check-update
+        run: |
+          if [ "${{ steps.get-latest.outputs.tag }}" != "${{ steps.get-current.outputs.tag }}" ]; then
+            echo "Update needed: ${{ steps.get-current.outputs.tag }} -> ${{ steps.get-latest.outputs.tag }}"
+            echo "needed=true" >> $GITHUB_OUTPUT
+          else
+            echo "No update needed, current tag is latest"
+            echo "needed=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update wrangler.toml
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          sed -i 's|image = "rsshub:[^"]*"|image = "rsshub:${{ steps.get-latest.outputs.tag }}"|' wrangler.toml
+          cat wrangler.toml
+
+      - name: Login to GitHub Container Registry
+        if: steps.check-update.outputs.needed == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull RSSHub image
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          docker pull ghcr.io/diygod/rsshub:${{ steps.get-latest.outputs.tag }}
+          docker tag ghcr.io/diygod/rsshub:${{ steps.get-latest.outputs.tag }} rsshub:${{ steps.get-latest.outputs.tag }}
+
+      - name: Push image to Cloudflare
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          npx wrangler containers push rsshub:${{ steps.get-latest.outputs.tag }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy to Cloudflare
+        if: steps.check-update.outputs.needed == 'true'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Commit updated wrangler.toml
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add wrangler.toml
+          git commit -m "chore: update rsshub image to ${{ steps.get-latest.outputs.tag }}"
+          git push
