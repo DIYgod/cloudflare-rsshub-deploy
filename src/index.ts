@@ -4,7 +4,7 @@
 import { Container } from '@cloudflare/containers';
 import type { KVNamespace } from '@cloudflare/workers-types';
 
-const INSTANCE_COUNT = 20;
+const INSTANCE_COUNT = 10;
 
 export class RSSHubContainer extends Container {
     defaultPort = 1200;
