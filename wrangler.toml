@@ -14,7 +14,7 @@ enabled = true
 [[containers]]
 class_name = "RSSHubContainer"
 image = "registry.cloudflare.com/CLOUDFLARE_ACCOUNT_ID/rsshub:9aa55f54afc463b353acd59e49bd543dea788eea"
-max_instances = 20
+max_instances = 10
 instance_type = "standard-1"
 
 # Durable Object binding for the container
