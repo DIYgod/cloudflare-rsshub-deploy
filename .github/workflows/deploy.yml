@@ -60,7 +60,7 @@ jobs:
       - name: Get current tag from wrangler.toml
         id: get-current
         run: |
-          CURRENT_TAG=$(grep -oP 'image = "rsshub:\K[^"]+' wrangler.toml || echo "")
+          CURRENT_TAG=$(grep -oP 'image = "registry\.cloudflare\.com/[^/]+/rsshub:\K[^"]+' wrangler.toml || echo "")
           echo "Current tag: $CURRENT_TAG"
           echo "tag=$CURRENT_TAG" >> $GITHUB_OUTPUT
 
@@ -82,7 +82,7 @@ jobs:
       - name: Update wrangler.toml
         if: steps.check-update.outputs.needed == 'true'
         run: |
-          sed -i 's|image = "rsshub:[^"]*"|image = "rsshub:${{ steps.get-latest.outputs.tag }}"|' wrangler.toml
+          sed -i 's|image = "registry.cloudflare.com/[^/]*/rsshub:[^"]*"|image = "registry.cloudflare.com/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/rsshub:${{ steps.get-latest.outputs.tag }}"|' wrangler.toml
           cat wrangler.toml
 
       - name: Login to GitHub Container Registry
@@ -113,6 +113,12 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Restore placeholder in wrangler.toml before commit
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          sed -i 's|image = "registry.cloudflare.com/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/rsshub:|image = "registry.cloudflare.com/CLOUDFLARE_ACCOUNT_ID/rsshub:|' wrangler.toml
+          cat wrangler.toml
 
       - name: Commit updated wrangler.toml
         if: steps.check-update.outputs.needed == 'true'
