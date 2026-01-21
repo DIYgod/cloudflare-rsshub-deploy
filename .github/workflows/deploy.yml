@@ -114,6 +114,12 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Restore placeholder in wrangler.toml before commit
+        if: steps.check-update.outputs.needed == 'true'
+        run: |
+          sed -i 's|image = "registry.cloudflare.com/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/rsshub:|image = "registry.cloudflare.com/CLOUDFLARE_ACCOUNT_ID/rsshub:|' wrangler.toml
+          cat wrangler.toml
+
       - name: Commit updated wrangler.toml
         if: steps.check-update.outputs.needed == 'true'
         run: |
