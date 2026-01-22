@@ -38,16 +38,15 @@ jobs:
 
       - name: Get latest RSSHub image tag
         id: get-latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # Get token for ghcr.io anonymous access
-          TOKEN=$(curl -s "https://ghcr.io/token?scope=repository:diygod/rsshub:pull" | jq -r '.token')
-
-          # Get tags list from ghcr.io
-          TAGS=$(curl -s "https://ghcr.io/v2/diygod/rsshub/tags/list" -H "Authorization: Bearer $TOKEN" | jq -r '.tags[]')
-
-          # Filter for chromium-bundled- prefixed tags (chromium-bundled-<hash>)
-          # Tags appear to be returned in chronological order, so we get the last one
-          LATEST_TAG=$(echo "$TAGS" | grep -E '^chromium-bundled-[a-f0-9]{40}$' | tail -1)
+          # Use GitHub API to get package versions sorted by creation time (newest first)
+          LATEST_TAG=$(curl -s -H "Authorization: Bearer $GH_TOKEN" \
+            "https://api.github.com/users/diygod/packages/container/rsshub/versions?per_page=100" | \
+            jq -r '.[].metadata.container.tags[]' | \
+            grep -E '^chromium-bundled-[a-f0-9]{40}$' | \
+            head -1)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "Failed to get latest tag"
