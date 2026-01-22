@@ -45,9 +45,9 @@ jobs:
           # Get tags list from ghcr.io
           TAGS=$(curl -s "https://ghcr.io/v2/diygod/rsshub/tags/list" -H "Authorization: Bearer $TOKEN" | jq -r '.tags[]')
 
-          # Filter for commit hash tags (40 hex chars, no prefix) and get the last one
-          # Tags appear to be returned in chronological order, so we reverse and get first match
-          LATEST_TAG=$(echo "$TAGS" | grep -E '^[a-f0-9]{40}$' | tail -1)
+          # Filter for chromium-bundled- prefixed tags (chromium-bundled-<hash>)
+          # Tags appear to be returned in chronological order, so we get the last one
+          LATEST_TAG=$(echo "$TAGS" | grep -E '^chromium-bundled-[a-f0-9]{40}$' | tail -1)
 
           if [ -z "$LATEST_TAG" ]; then
             echo "Failed to get latest tag"
