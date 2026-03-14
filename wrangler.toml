@@ -31,6 +31,10 @@ new_sqlite_classes = ["RSSHubContainer"]
 [[kv_namespaces]]
 binding = "CONFIG"
 
+[[analytics_engine_datasets]]
+binding = "REQUEST_ANALYTICS"
+dataset = "rsshub_requests"
+
 # Set env vars in KV using wrangler CLI:
 # wrangler kv:key put --namespace-id=<namespace-id> "GITHUB_ACCESS_TOKEN" "your-token"
 # wrangler kv:key put --namespace-id=<namespace-id> "ACCESS_KEY" "your-key"
