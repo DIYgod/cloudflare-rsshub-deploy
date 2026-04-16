@@ -14,7 +14,7 @@ enabled = true
 [[containers]]
 class_name = "RSSHubContainer"
 image = "registry.cloudflare.com/CLOUDFLARE_ACCOUNT_ID/rsshub:chromium-bundled-1d7f3dc8fcfc02a33f354b5db42cd290301d525a"
-max_instances = 60
+max_instances = 32
 instance_type = "standard-1"
 
 # Durable Object binding for the container
