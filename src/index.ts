@@ -4,7 +4,7 @@
 import { Container } from '@cloudflare/containers';
 import type { KVNamespace } from '@cloudflare/workers-types';
 
-const INSTANCE_COUNT = 32;
+const INSTANCE_COUNT = 44;
 const FAILURE_REASON_LIMIT = 160;
 const RSSHUB_ROUTE_HEADER = 'X-RSSHub-Route';
 const UNKNOWN_ROUTE = 'unknown';
