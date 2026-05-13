@@ -13,7 +13,7 @@ enabled = true
 # Image tag will be updated by GitHub Actions
 [[containers]]
 class_name = "RSSHubContainer"
-image = "registry.cloudflare.com/CLOUDFLARE_ACCOUNT_ID/rsshub:chromium-bundled-dd8ee083934ff96caf06b9c6a947edeb6404ee21"
+image = "registry.cloudflare.com/CLOUDFLARE_ACCOUNT_ID/rsshub:chromium-bundled-591dcb85be168b411ae86ae9bf22c145f086c87a"
 max_instances = 44
 instance_type = "standard-1"
 
